@@ -4,10 +4,21 @@ pub mod excercise {
 mod ast;
 mod input;
 
-use core::num;
-use std::{collections::BTreeMap, net::ToSocketAddrs, ops::Rem, rc::Rc};
+use core::{hash, num};
+use std::{
+    collections::{BTreeMap, HashSet},
+    f64::consts::FRAC_2_PI,
+    net::ToSocketAddrs,
+    num::{NonZero, NonZeroU32},
+    ops::Rem,
+    rc::Rc,
+};
 
-use ast::*;
+use crate::ast::simplify::canonical_term::VarExpMap;
+use ast::{
+    simplify::number_fraction::{self, NumberFraction},
+    *,
+};
 use input::{get_input, get_number, get_number_in_range, wait_for_enter};
 use rand::{
     distr::uniform::{SampleRange, SampleUniform},
@@ -26,13 +37,70 @@ struct ExtractDiffSquares {
 }
 
 impl ExtractDiffSquares {
-    fn generate_random(rnd: &mut StdRng, max_vars: u32, simple_chance: f64) -> Self {
-        let a = generate_term(rnd, max_vars);
-        let b = generate_term(rnd, max_vars);
-        let a2 = a.pow_random(rnd, 2, simple_chance);
-        let b2 = b.pow_random(rnd, 2, simple_chance);
+    fn generate_random(
+        rnd: &mut StdRng,
+        no_vars_in_denominator_prob: f64,
+        number_part_prob: f64,
+        separate_number_fraction_prob: f64,
+        number_frac_prob: f64,
+        _max_vars: u32,
+        non_simplified_prob: f64,
+    ) -> Self {
+        let symbols: &[char] = &[random_range_filter(rnd, 'a'..='z', |chr| *chr != 'l')];
+        let random_pick = rnd.random_bool(0.5_f64);
+
+        let mut random_term = |must_contain_var: bool| {
+            random_mult_div_term(
+                rnd,
+                symbols,
+                no_vars_in_denominator_prob,
+                number_part_prob,
+                separate_number_fraction_prob,
+                number_frac_prob,
+                must_contain_var,
+                NonZeroU32::new(20).unwrap(),
+            )
+        };
+
+        let a = random_term(random_pick);
+        let b = random_term(!random_pick);
+        let a2 = square_random(rnd, a.clone(), non_simplified_prob);
+        let b2 = square_random(rnd, b.clone(), non_simplified_prob);
+
         Self { a, b, a2, b2 }
     }
+}
+
+fn square_random(rnd: &mut StdRng, expr: Expr, non_simplified_prob: f64) -> Expr {
+    let mut squared_expr = expr.pow(Expr::Number(2));
+    let simplified_prob = 1_f64 - non_simplified_prob;
+    if rnd.random_bool(simplified_prob) {
+        squared_expr = squared_expr.simplify_exp().new_expr;
+        //
+        squared_expr = squared_expr.simplify_commutative().new_expr;
+        squared_expr = squared_expr.simplify_by_evaluation().new_expr;
+        squared_expr = squared_expr.simplify_mult_div().new_expr;
+    }
+
+    for _ in 0..6 {
+        squared_expr = squared_expr.simplify_by_evaluation().new_expr;
+        squared_expr = squared_expr.simplify_mult_div().new_expr;
+        squared_expr = squared_expr.simplify_commutative().new_expr;
+    }
+    squared_expr
+}
+
+fn random_symbols(rnd: &mut StdRng, max_vars: u32) -> HashSet<char> {
+    let mut result_set = HashSet::new();
+    let vars_count = rnd.random_range(0..=max_vars);
+    for _ in 0..vars_count {
+        while {
+            let random_symbol = random_range_filter(rnd, 'a'..='z', |chr| *chr != 'l');
+            !result_set.insert(random_symbol)
+        } {}
+    }
+
+    return result_set;
 }
 
 fn random_range_filter<T: SampleUniform, R: SampleRange<T> + Clone, F: Fn(&T) -> bool>(
@@ -48,143 +116,80 @@ fn random_range_filter<T: SampleUniform, R: SampleRange<T> + Clone, F: Fn(&T) ->
     }
 }
 
-fn generate_term(rnd: &mut StdRng, max_vars: u32) -> Expr {
-    let variable_count = rnd.random_range(0..=max_vars);
-    let mut var_exp_dict = BTreeMap::<char, u32>::new();
-    for _ in 0..variable_count {
-        let new_var = random_range_filter(rnd, 'a'..='z', |chr| *chr != 'l');
-        let exp = rnd.random_range(1..=20);
-        var_exp_dict.insert(new_var, exp);
-    }
-
-    let mut variables = vec![Expr::Number(rnd.random_range(1..=20))];
-    variables.extend(var_exp_dict.iter().map(|(var, exp)| Expr::Exp {
-        base: Expr::Variable { symbol: *var }.into(),
-        exp: Expr::Number(*exp).into(),
-    }));
-
-    if variable_count == 0 {
-        variables[0].clone()
-    } else {
-        Expr::Multiplication(variables)
-    }
+fn random_pick<T: Copy>(rnd: &mut StdRng, source: &[T]) -> T {
+    let random_idx = rnd.random_range(0..source.len());
+    source[random_idx]
 }
 
-impl Expr {
-    fn pow(&self, exponent: i32) -> Expr {
-        match self {
-            Expr::Multiplication(exprs) => {
-                let new_exprs = exprs.iter().map(|e| e.pow(exponent)).collect();
-                Expr::Multiplication(new_exprs)
-            }
-            Expr::Division { lhs, rhs } => Expr::Division {
-                lhs: lhs.pow(exponent).into(),
-                rhs: rhs.pow(exponent).into(),
-            },
-            Expr::Variable { symbol: _ } => Expr::Exp {
-                base: self.clone().into(),
-                exp: Expr::signed_number(exponent).into(),
-            },
-            Expr::Exp { base, exp } => {
-                let new_exp = exp.multiply_by_number(exponent);
-                match new_exp {
-                    Expr::Number(1) => (**base).clone(),
-                    Expr::Number(0) => Expr::Number(1), // WARNING: this could be undefined 0^0
-                    _ => Expr::Exp {
-                        base: base.clone(),
-                        exp: new_exp.into(),
-                    },
-                }
-            }
-            Expr::Number(0 | 1) => self.clone(),
-            Expr::Number(number) => {
-                let abs_exp = exponent.unsigned_abs();
-                if exponent.is_negative() {
-                    Expr::Division {
-                        lhs: Expr::Number(1).into(),
-                        rhs: Expr::Number(number.pow(abs_exp)).into(),
-                    }
-                } else {
-                    Expr::Number(number.pow(abs_exp))
-                }
-            }
-            Expr::Addition(_) => unimplemented!("Neumím umocnit sčítání"),
-            Expr::UnaryMinus(_) => unimplemented!("Neumím umocnit sčítání"),
-            // _ => unimplemented!("Neumím umocnit binární operace \"{self}\" :)"),
-        }
+fn random_mult_div_term(
+    rnd: &mut StdRng,
+    available_vars: &[char],
+    no_vars_in_denominator_prob: f64,
+    number_part_prob: f64,
+    separate_number_fraction_prob: f64,
+    number_frac_prob: f64,
+    must_contain_variable: bool,
+    max_exp: NonZeroU32,
+) -> Expr {
+    // Figure out the ranges for the exponents of the individual variables
+    let max_exp = max_exp.get() as i32;
+    let no_vars_in_denominator = rnd.random_bool(no_vars_in_denominator_prob);
+    let min_exp = if no_vars_in_denominator { 1 } else { -max_exp };
+
+    // Generate variables to a certain power
+    let variable_count = rnd.random_range((must_contain_variable as usize)..=available_vars.len());
+    let mut var_exps = VarExpMap::new();
+    for _ in 0..variable_count {
+        let random_var = random_pick(rnd, available_vars);
+        var_exps[random_var] = random_range_filter(rnd, min_exp..=max_exp, |x| *x != 0 && *x != 1);
     }
+    let (mut top_exprs, mut bottom_exprs) = var_exps.partition_by_exp_sign();
 
-    fn multiply_by_number(&self, multiplier: i32) -> Expr {
-        match self {
-            Expr::Addition(exprs) => {
-                let new_exprs = exprs
-                    .iter()
-                    .map(|e| e.multiply_by_number(multiplier))
-                    .collect();
-                Expr::Addition(new_exprs)
-            }
-            Expr::Multiplication(exprs) => {
-                // Find any "number" or "-number" at some index
-                let multiplied_expr: Option<(usize, Expr)> =
-                    exprs
-                        .iter()
-                        .enumerate()
-                        .find_map(|(idx, expr)| -> Option<(usize, Expr)> {
-                            match expr {
-                                Expr::UnaryMinus(inner) => {
-                                    if let Expr::Number(_) = **inner {
-                                        (idx, expr.multiply_by_number(multiplier)).into()
-                                    } else {
-                                        None
-                                    }
-                                }
-                                Expr::Number(_) => {
-                                    (idx, expr.multiply_by_number(multiplier)).into()
-                                }
-                                _ => None,
-                            }
-                        });
-
-                let mut exprs_copy = exprs.clone();
-                if let Some((idx, expr)) = multiplied_expr {
-                    exprs_copy[idx] = expr;
-                }
-
-                Expr::Multiplication(exprs_copy)
-            }
-            Expr::Division { lhs, rhs } => Expr::Division {
-                lhs: lhs.multiply_by_number(multiplier).into(),
-                rhs: rhs.clone(),
-            },
-            Expr::UnaryMinus(expr) => expr.multiply_by_number(-multiplier),
-            Expr::Number(num) => Expr::signed_number((*num as i32) * multiplier),
-            expr => {
-                let abs_multiplier = multiplier.unsigned_abs();
-                let inner_expr = match abs_multiplier {
-                    0 => return Expr::zero(),
-                    1 => expr.clone(),
-                    _ => Expr::Multiplication(vec![Expr::Number(abs_multiplier), expr.clone()]),
-                };
-
-                inner_expr.maybe_wrap_in_minus(multiplier.is_negative())
-            }
-        }
-    }
-
-    fn pow_simple(&self, exponent: i32) -> Expr {
-        Expr::Exp {
-            base: self.clone().into(),
-            exp: Expr::signed_number(exponent).into(),
-        }
-    }
-
-    fn pow_random(&self, rnd: &mut StdRng, exponent: i32, simple_chance: f64) -> Expr {
-        if rnd.random_bool(simple_chance) {
-            self.pow_simple(exponent)
+    // Add the number if it should have been generated
+    let wanted_number_part = rnd.random_bool(number_part_prob);
+    let should_include_number = wanted_number_part || variable_count == 0;
+    if should_include_number {
+        let number_part_should_be_fraction = rnd.random_bool(number_frac_prob);
+        let number_fraction = if number_part_should_be_fraction {
+            random_non_integer_fraction(rnd)
         } else {
-            self.pow(exponent)
+            NumberFraction::whole_number(rnd.random_range(2..=20))
+        };
+
+        // Check if the number part should be separate.
+        // Meaning the expression is in the form:
+        //   (fraction or number)  *  (fraction of variables to some power)
+        let number_part_wanted_to_be_separate = rnd.random_bool(separate_number_fraction_prob);
+        if number_part_wanted_to_be_separate {
+            let variables_part = Expr::mult_div_from_exprs(top_exprs, bottom_exprs);
+            let number_part = Expr::from_number_fraction(number_fraction.abs());
+            return Expr::mult(number_part, variables_part);
         }
+
+        // The number part should not be separate.
+        // => Lets add it to the top and bottom part of the fraction.
+        let add_number = |number: u32, exprs: &mut Vec<Expr>| {
+            if number != 1 {
+                exprs.insert(0, Expr::Number(number));
+            }
+        };
+        add_number(number_fraction.top, &mut top_exprs);
+        add_number(number_fraction.bottom_u32(), &mut bottom_exprs);
     }
+
+    Expr::mult_div_from_exprs(top_exprs, bottom_exprs)
+}
+
+fn random_non_integer_fraction(rnd: &mut StdRng) -> NumberFraction {
+    let top: i32 = rnd.random_range(1..=19);
+    let bottom: i32 = rnd.random_range((top + 1)..=20);
+    NumberFraction::new_in_base_form(top, bottom).expect("Bottom cannot be zero")
+}
+
+fn random_number_fraction(rnd: &mut StdRng) -> NumberFraction {
+    let top: i32 = rnd.random_range(1..=20);
+    let bottom: i32 = rnd.random_range(1..=20);
+    NumberFraction::new_in_base_form(top, bottom).expect("Bottom cannot be zero")
 }
 
 fn do_diff_squares(assignment: ExtractDiffSquares) {
@@ -238,10 +243,12 @@ fn do_diff_squares(assignment: ExtractDiffSquares) {
 fn main() {
     let seed: u64 = get_number("Zadej seed");
     let mut rnd = StdRng::seed_from_u64(seed);
-    for _ in 0.. {
+    for idx in 0.. {
         println!("\n\n\n");
-        println!("========================");
-        let ass = ExtractDiffSquares::generate_random(&mut rnd, 4, 0.09f64);
+        println!("======================== {idx} ========================");
+        let ass = ExtractDiffSquares::generate_random(
+            &mut rnd, 0.6__f64, 0.8__f64, 0.4__f64, 0.4__f64, 1, 0.05__f64,
+        );
         do_diff_squares(ass);
     }
 }
