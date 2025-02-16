@@ -2,6 +2,7 @@ use std::{collections::VecDeque, ops::Deref, rc::Rc};
 pub mod canonical_term;
 pub mod var_exp_map;
 pub mod simplify_mult_div;
+pub mod simplify_exp;
 
 use crate::{
     expression::{

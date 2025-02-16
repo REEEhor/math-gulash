@@ -2,6 +2,20 @@ use std::{collections::VecDeque, ops::Mul, rc::Rc};
 
 use super::{Expr, ExprRef};
 
+pub fn exp(base: Rc<Expr>, exponent: i32) -> Expr {
+    Expr::Exp {
+        base,
+        exp: exponent,
+    }
+}
+
+pub fn one_over(expr: Rc<Expr>) -> Expr {
+    Expr::Division {
+        lhs: Expr::one().into(),
+        rhs: expr.clone(),
+    }
+}
+
 fn mul(lhs: Expr, rhs: Expr) -> Expr {
     match (lhs, rhs) {
         (Expr::Multiplication(mut lhs_exprs), Expr::Multiplication(mut rhs_exprs)) => {

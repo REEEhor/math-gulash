@@ -170,45 +170,11 @@ fn simplify_mult<'a, ExprIter: Iterator<Item = &'a Expr>>(
 #[cfg(test)]
 mod test {
     use crate::{
-        expression::{self, error::EvalError, Expr},
+        expression::{self, error::EvalError, test_helpers::*, Expr},
         simplification::Simplification,
     };
 
     use super::SimplifyMultDiv;
-
-    fn vexp(base: char, exp: i32) -> Expr {
-        Expr::Exp {
-            base: Expr::Variable { symbol: base }.into(),
-            exp,
-        }
-    }
-
-    fn var(symbol: char) -> Expr {
-        Expr::Variable { symbol }
-    }
-
-    fn mult(exprs: &[Expr]) -> Expr {
-        Expr::Multiplication(exprs.to_vec().into())
-    }
-
-    fn add(exprs: &[Expr]) -> Expr {
-        Expr::Addition(exprs.to_vec().into())
-    }
-
-    fn num(number: i32) -> Expr {
-        Expr::signed_number(number)
-    }
-
-    fn div(top: Expr, bottom: Expr) -> Expr {
-        Expr::Division {
-            lhs: top.into(),
-            rhs: bottom.into(),
-        }
-    }
-
-    fn neg(inner: Expr) -> Expr {
-        Expr::UnaryMinus(inner.into())
-    }
 
     #[test]
     fn var_exp_combination_1() {

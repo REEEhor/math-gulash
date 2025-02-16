@@ -1,6 +1,6 @@
 use rand::prelude::*;
-mod input;
 mod expression;
+mod input;
 pub mod simplification;
 use input::*;
 
@@ -10,5 +10,10 @@ fn main() {
     // for _idx in 0.. {
     // }
 
-    println!("x²");
+    for divisor in 2_i32..=5_i32 {
+        for i in -10_i32..=10_i32 {
+            println!("{} mod {} = {}", i, divisor, i.rem_euclid(divisor));
+        }
+        println!("\n\n\n");
+    }
 }
