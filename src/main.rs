@@ -16,4 +16,54 @@ fn main() {
         }
         println!("\n\n\n");
     }
+
+    use expression::test_helpers::*;
+    let expr = mult(&[
+        num(324),
+        vexp('a', 5),
+        vexp('b', 3),
+        var('y'),
+        vexp('d', 9),
+        add(&[num(2), var('x')]),
+        vexp('e', 8),
+    ]);
+    println!("{}", expr.disp());
+    //
+    println!();
+    //
+    let expr = mult(&[
+        num(324),
+        vexp('a', 5),
+        vexp('b', -23),
+        var('y'),
+        vexp('d', 999),
+        add(&[num(2), var('x')]),
+        vexp('e', 87),
+    ]);
+    println!("{}", expr.disp());
+    //
+    println!();
+    //
+    let expr = add(&[
+        mult(&[num(2), var('a')]),
+        mult(&[
+            num(324),
+            var('y'),
+            vexp('d', 9),
+            add(&[num(2), var('x')]),
+            vexp('e', 8),
+        ]),
+    ]);
+    println!("{}", expr.disp());
+    //
+    println!();
+    //
+    let expr1 = add(&[var('a'), neg(var('b'))]).pow(2);
+    let expr2 = add(&[
+        var('a').pow(2),
+        neg(mult(&[num(2), var('a'), var('b')])),
+        var('b').pow(2),
+    ]);
+    println!("{} = {}", expr1.disp(), expr2.disp());
+    //
 }
