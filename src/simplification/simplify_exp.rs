@@ -61,7 +61,10 @@ fn simplify_inner(base: Rc<Expr>, exponent: i32) -> SimpResult<Expr> {
                 exp(expr.clone(), exponent).maybe_wrap_in_minus(!remove_minus),
             ))
         }
-        Expr::Exp { base, exp } => todo!(),
+        Expr::Exp { base, exp } => Ok(Some(Expr::Exp {
+            base: base.clone(),
+            exp: *exp * exponent,
+        })),
         Expr::Variable { symbol } => {
             let exponent_abs = exponent.abs();
             Ok(Some(if exponent.is_negative() {

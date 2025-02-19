@@ -1,29 +1,21 @@
 use core::fmt;
+use std::any;
 use std::io::{self, Write};
 use std::ops::RangeInclusive;
 use std::str::FromStr;
 
-pub fn get_number_in_range<Num: fmt::Display + FromStr + PartialOrd>(
-    question: &str,
-    range: RangeInclusive<Num>,
-) -> Num {
-    let expected_str = format!("číslo {}-{}", range.start(), range.end());
-    let parser_fn = |input: &str| match input.parse::<Num>() {
-        Ok(number) => {
-            if range.contains(&number) {
-                println!(
-                    "Číslo {number} není od {} do {}",
-                    range.start(),
-                    range.end()
-                );
-                Some(number)
-            } else {
-                None
-            }
-        }
-        Err(_) => todo!(),
-    };
-    get_input(question, Some(&expected_str), parser_fn)
+pub type Result<T> = anyhow::Result<T>;
+
+pub trait InOut {
+    fn read_line(&mut self) -> Result<String>;
+    fn write_line(&mut self, text: &str);
+}
+
+impl dyn InOut {
+    fn wait_for_enter(&mut self, prompt: &str) {
+        self.write_line(prompt);
+        self.read_line();
+    }
 }
 
 pub fn wait_for_enter(prompt: &str) {

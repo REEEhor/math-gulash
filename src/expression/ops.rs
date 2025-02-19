@@ -16,7 +16,7 @@ pub fn one_over(expr: Rc<Expr>) -> Expr {
     }
 }
 
-fn mul(lhs: Expr, rhs: Expr) -> Expr {
+pub fn mul(lhs: Expr, rhs: Expr) -> Expr {
     match (lhs, rhs) {
         (Expr::Multiplication(mut lhs_exprs), Expr::Multiplication(mut rhs_exprs)) => {
             lhs_exprs.append(&mut rhs_exprs);

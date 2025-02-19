@@ -1,69 +1,29 @@
+use excercise::{
+    extract::div_squares::DivSquaresFactory, random::SymbolsGenerator, ExcerciseFactory,
+};
 use rand::prelude::*;
+pub mod excercise;
 mod expression;
 mod input;
 pub mod simplification;
 use input::*;
 
 fn main() {
-    // let seed: u64 = get_number("Zadej seed");
-    // let mut _rnd = StdRng::seed_from_u64(seed);
-    // for _idx in 0.. {
-    // }
+    let seed: u64 = get_number("Zadej seed");
+    let mut rnd = StdRng::seed_from_u64(seed);
 
-    for divisor in 2_i32..=5_i32 {
-        for i in -10_i32..=10_i32 {
-            println!("{} mod {} = {}", i, divisor, i.rem_euclid(divisor));
-        }
-        println!("\n\n\n");
+    let mut excercise_factory = DivSquaresFactory {
+        symbols_generator: SymbolsGenerator::new(1, 2),
+        p_number_part: 0.8_f64,
+        p_number_fraction: 0.0_f64,
+        p_number_and_var_fused: 1.0_f64,
+        var_exponent_range: 1..=20,
+        number_part_range: 1..=20,
+        p_should_tell_via_formula: 1_f64,
+    };
+
+    for idx in 0.. {
+        println!("{idx}: ");
+        excercise_factory.generate(&mut rnd).do_excercise();
     }
-
-    use expression::test_helpers::*;
-    let expr = mult(&[
-        num(324),
-        vexp('a', 5),
-        vexp('b', 3),
-        var('y'),
-        vexp('d', 9),
-        add(&[num(2), var('x')]),
-        vexp('e', 8),
-    ]);
-    println!("{}", expr.disp());
-    //
-    println!();
-    //
-    let expr = mult(&[
-        num(324),
-        vexp('a', 5),
-        vexp('b', -23),
-        var('y'),
-        vexp('d', 999),
-        add(&[num(2), var('x')]),
-        vexp('e', 87),
-    ]);
-    println!("{}", expr.disp());
-    //
-    println!();
-    //
-    let expr = add(&[
-        mult(&[num(2), var('a')]),
-        mult(&[
-            num(324),
-            var('y'),
-            vexp('d', 9),
-            add(&[num(2), var('x')]),
-            vexp('e', 8),
-        ]),
-    ]);
-    println!("{}", expr.disp());
-    //
-    println!();
-    //
-    let expr1 = add(&[var('a'), neg(var('b'))]).pow(2);
-    let expr2 = add(&[
-        var('a').pow(2),
-        neg(mult(&[num(2), var('a'), var('b')])),
-        var('b').pow(2),
-    ]);
-    println!("{} = {}", expr1.disp(), expr2.disp());
-    //
 }

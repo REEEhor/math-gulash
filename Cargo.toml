@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.95"
 cargo-llvm-cov = "0.6.16"
 colored = "3.0.0"
 rand = "0.9.0"

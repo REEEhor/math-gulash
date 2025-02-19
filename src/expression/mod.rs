@@ -55,11 +55,11 @@ impl Expr {
             (true, false) /* nominator canceled out   */ => Expr::Division {
                 lhs: Expr::Number(1).into(),
                 rhs: Expr::checked_mult(bottom_exprs).into(),
-            }.into(),
+            },
             (false, false) /* both parts are non empty */ => Expr::Division {
                 lhs: Expr::checked_mult(top_exprs).into(),
                 rhs: Expr::checked_mult(bottom_exprs).into(),
-            }.into(),
+            },
         }
     }
 

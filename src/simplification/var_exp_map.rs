@@ -4,7 +4,7 @@ use std::{
 };
 
 use super::Expr;
-const NUM_OF_VARS: usize = ('z' as usize) - ('a' as usize) + 1;
+pub const NUM_OF_VARS: usize = ('z' as usize) - ('a' as usize) + 1;
 
 #[derive(PartialEq, Eq)]
 pub struct VarExpMap(pub [i32; NUM_OF_VARS]);
