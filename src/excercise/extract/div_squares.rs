@@ -38,7 +38,7 @@ impl Excercise for DivSquares {
         io::stdout().flush().unwrap();
         io::stdin().read_line(&mut String::new()).unwrap();
 
-        println!("\nCorrect result:");
+        println!("Correct result:");
         println!("  {}  =  {}", expr_str.cyan(), result_str.red());
     }
 }

@@ -85,10 +85,107 @@ pub fn try_simplifying_one_of_exprs<
             expr.clone()
         } else {
             simp.simplify_once_recursive(expr)?
+                .inspect(|_simp_expr| simplification_happened = true)
                 .unwrap_or_else(|| expr.clone())
         };
         result_exprs.push_back(new_expr);
     }
 
     Ok(simplification_happened.then_some(result_exprs))
+}
+
+#[cfg(test)]
+mod test {
+    use std::{
+        collections::{HashMap, HashSet},
+        convert::Infallible,
+    };
+
+    use crate::expression::{error::EvalError, test_helpers::*, Expr};
+
+    use super::{SimpResult, Simplification};
+
+    struct SimpMock<F: Fn(&Expr) -> SimpResult<Expr>> {
+        simplify_func: F,
+    }
+
+    fn simpl<F: Fn(&Expr) -> SimpResult<Expr>>(f: F) -> SimpMock<F> {
+        SimpMock { simplify_func: f }
+    }
+
+    impl<F: Fn(&Expr) -> SimpResult<Expr>> Simplification for SimpMock<F> {
+        fn simplify(&self, expr: &Expr) -> SimpResult<Expr> {
+            (self.simplify_func)(expr)
+        }
+    }
+
+    fn rename_simp(
+        rename: &[(char, char)],
+        fail: &[char],
+    ) -> SimpMock<impl Fn(&Expr) -> SimpResult<Expr>> {
+        let rename_map = HashMap::<char, char>::from_iter(rename.iter().copied());
+        let fail_set = HashSet::<char>::from_iter(fail.iter().copied());
+        simpl(move |expr| match expr {
+            Expr::Variable { symbol } if fail_set.contains(symbol) => {
+                Err(EvalError::TestError(symbol.to_string()))
+            }
+            Expr::Variable { symbol } if rename_map.contains_key(symbol) => {
+                Ok(Some(Expr::Variable {
+                    symbol: *rename_map.get(symbol).unwrap(),
+                }))
+            }
+            _ => Ok(None),
+        })
+    }
+
+    fn err(symbol: char) -> SimpResult<Expr> {
+        Err(EvalError::TestError(symbol.to_string()))
+    }
+
+    #[test]
+    fn test_simplify_once_recursive_base_case() {
+        let s = rename_simp(&[('x', 'a')], &[]);
+        let expr = Expr::Variable { symbol: 'x' };
+        let actual = s.simplify_once_recursive(&expr);
+        //
+        let expected = Expr::Variable { symbol: 'a' };
+        assert_eq!(actual, Ok(Some(expected)))
+    }
+
+    #[test]
+    fn test_simplify_once_recursive_propagating_erorrs() {
+        let s = rename_simp(&[], &['x']);
+        let expr = var('x');
+        let actual = s.simplify_once_recursive(&expr);
+        //
+        assert_eq!(actual, err('x'));
+    }
+
+    fn rename_simp_1() -> SimpMock<impl Fn(&Expr) -> SimpResult<Expr>> {
+        rename_simp(&[('a', 'A'), ('b', 'B'), ('c', 'C')], &['x'])
+    }
+
+    #[test]
+    fn test_simplify_once_recursive_one_deep_recursion() {
+        let s = rename_simp_1();
+        //
+        let expr = add(&[var('b'), var('a'), var('c')]);
+        let actual = s.simplify_once_recursive(&expr);
+        let expected = add(&[var('B'), var('a'), var('c')]);
+        assert_eq!(actual, Ok(Some(expected)));
+        //
+        let expr = actual.unwrap().unwrap();
+        let actual = s.simplify_once_recursive(&expr);
+        let expected = add(&[var('B'), var('A'), var('c')]);
+        assert_eq!(actual, Ok(Some(expected)));
+        //
+        let expr = actual.unwrap().unwrap();
+        let actual = s.simplify_once_recursive(&expr);
+        let expected = add(&[var('B'), var('A'), var('C')]);
+        assert_eq!(actual, Ok(Some(expected)));
+        //
+        let expr = actual.unwrap().unwrap();
+        let actual = s.simplify_once_recursive(&expr);
+        assert_eq!(actual, Ok(None));
+    }
 }

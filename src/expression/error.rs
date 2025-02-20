@@ -6,4 +6,6 @@ pub enum EvalError {
     DivisionByZero,
     #[error("calculating 0^0 is indeterminite")]
     ZeroToZero,
+    #[error("This is an error just for tests. It says: '{0}'")]
+    TestError(String),
 }
