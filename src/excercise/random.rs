@@ -23,6 +23,7 @@ use crate::{
 
 pub type Prob = f64;
 
+#[derive(Clone, Copy)]
 pub struct SymbolsGenerator {
     min_vars_count: u32,
     max_vars_count: u32,

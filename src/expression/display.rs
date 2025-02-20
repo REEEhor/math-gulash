@@ -77,7 +77,7 @@ impl Expr {
     }
 }
 
-fn to_super(number: i32) -> String {
+pub fn to_super(number: i32) -> String {
     let number_str = format!("{number}");
     number_str
         .chars()

@@ -1,9 +1,9 @@
 use std::{collections::VecDeque, ops::Deref, rc::Rc};
 pub mod canonical_term;
+pub mod remove_ones_from_mult;
 pub mod simplify_exp;
 pub mod simplify_mult_div;
 pub mod var_exp_map;
-pub mod remove_ones_from_mult;
 
 use crate::{
     expression::{
@@ -67,6 +67,22 @@ pub trait Simplification {
             Expr::Number(_) => Ok(None),
             Expr::Variable { .. } => Ok(None),
         }
+    }
+
+    fn simplify_recursive(&self, expr: &Expr) -> SimpResult<Expr>
+    where
+        Self: Sized,
+    {
+        let mut simplified_expr = match self.simplify_once_recursive(expr)? {
+            Some(simplified_expr) => simplified_expr,
+            None => return Ok(None),
+        };
+
+        while let Some(new_simplified_expr) = self.simplify_once_recursive(&simplified_expr)? {
+            simplified_expr = new_simplified_expr;
+        }
+
+        Ok(Some(simplified_expr))
     }
 }
 
