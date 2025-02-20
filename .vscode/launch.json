@@ -1,46 +1,20 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'math-gulash'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=math-gulash",
-                    "--package=math-gulash"
-                ],
-                "filter": {
-                    "name": "math-gulash",
-                    "kind": "bin"
-                }
-            },
+            "name": "Debug",
+            "program": "${workspaceFolder}/target/debug/${workspaceFolderBasename}",
             "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'math-gulash'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=math-gulash",
-                    "--package=math-gulash"
-                ],
-                "filter": {
-                    "name": "math-gulash",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "sourceLanguages": [
+                "rust"
+            ],
+            "initCommands": [
+                "settings set target.prefer-dynamic-value run-target",
+                "settings set target.inline-breakpoint-strategy always"
+            ]
         }
     ]
 }

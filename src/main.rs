@@ -23,7 +23,7 @@ fn main() {
     };
 
     for idx in 0.. {
-        println!("{idx}: ");
+        println!("\n\n{idx}: ");
         excercise_factory.generate(&mut rnd).do_excercise();
     }
 }

@@ -10,6 +10,10 @@ impl Precedence {
     pub const fn is_before(self, other: Self) -> bool {
         self.0 < other.0
     }
+
+    pub const fn is_before_or_same(self, other: Self) -> bool {
+        self.0 <= other.0
+    }
 }
 
 pub const ADDITION: Precedence = Precedence(5);

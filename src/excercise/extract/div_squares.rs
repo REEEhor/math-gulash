@@ -36,9 +36,9 @@ impl Excercise for DivSquares {
         println!("  {}  =  ?", expr_str.cyan());
         print!("Waiting for enter... ");
         io::stdout().flush().unwrap();
-        io::stdin().read(&mut [0]).unwrap();
+        io::stdin().read_line(&mut String::new()).unwrap();
 
-        println!("Correct result:");
+        println!("\nCorrect result:");
         println!("  {}  =  {}", expr_str.cyan(), result_str.red());
     }
 }

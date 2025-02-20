@@ -11,9 +11,9 @@ const COLOR_ARRAY: &[Color] = &[
     // Color::BrightBlue,
 ];
 
-use crate::expression::precedence;
+use crate::expression::*;
 
-use super::{precedence::Precedence, Expr};
+use super::{Expr, Precedence};
 
 #[derive(Default)]
 struct ColorStack {
@@ -112,14 +112,14 @@ impl<'a> fmt::Display for ExprDisplay<'a> {
             Expr::Addition(exprs) => write_addition(f, exprs.iter()),
             Expr::Multiplication(exprs) => write_multiplication(f, exprs.iter()),
             Expr::Division { lhs, rhs } => {
-                let should_print_parenthesis = precedence::DIVISION.is_before(lhs.precedence());
+                let should_print_parenthesis = DIVISION.is_before(lhs.precedence());
                 if should_print_parenthesis {
                     write!(f, "({})", lhs.disp())?;
                 } else {
                     write!(f, "{}", lhs.disp())?;
                 }
 
-                let should_print_parenthesis = precedence::DIVISION.is_before(rhs.precedence());
+                let should_print_parenthesis = DIVISION.is_before(rhs.precedence());
                 if should_print_parenthesis {
                     write!(f, "/({})", rhs.disp())?;
                 } else {
@@ -128,7 +128,7 @@ impl<'a> fmt::Display for ExprDisplay<'a> {
                 Ok(())
             }
             Expr::UnaryMinus(expr) => {
-                let should_print_parenthesis = precedence::UNARY_MINUS.is_before(expr.precedence());
+                let should_print_parenthesis = UNARY_MINUS.is_before(expr.precedence());
                 if should_print_parenthesis {
                     write!(f, "-({})", expr.disp())
                 } else {
@@ -136,8 +136,7 @@ impl<'a> fmt::Display for ExprDisplay<'a> {
                 }
             }
             Expr::Exp { base, exp } => {
-                let should_print_parenthesis =
-                    precedence::EXPONENTIATION.is_before(base.precedence());
+                let should_print_parenthesis = EXPONENTIATION.is_before_or_same(base.precedence());
                 if should_print_parenthesis {
                     write!(f, "({})", base.disp())?;
                 } else {
@@ -166,7 +165,7 @@ fn write_addition<'a, ExprIter: Iterator<Item = &'a Expr>>(
             }
         }
 
-        let should_print_parenthesis = precedence::ADDITION.is_before(expr.precedence());
+        let should_print_parenthesis = ADDITION.is_before(expr.precedence());
 
         if should_print_parenthesis {
             write!(f, "({})", expr.disp())?;
@@ -185,7 +184,7 @@ fn write_multiplication<'a, ExprIter: Iterator<Item = &'a Expr>>(
         // if idx != 0 {
         //     write!(f, "·")?;
         // }
-        let should_print_parenthesis = precedence::MULTIPLICATION.is_before(expr.precedence());
+        let should_print_parenthesis = MULTIPLICATION.is_before(expr.precedence());
 
         if should_print_parenthesis {
             write!(f, "({})", expr.disp())?;

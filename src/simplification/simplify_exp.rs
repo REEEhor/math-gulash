@@ -67,20 +67,20 @@ fn simplify_inner(base: Rc<Expr>, exponent: i32) -> SimpResult<Expr> {
         })),
         Expr::Variable { symbol } => {
             let exponent_abs = exponent.abs();
-            Ok(Some(if exponent.is_negative() {
-                one_over(exp(base.clone(), exponent_abs).into())
-            } else {
-                exp(base.clone(), exponent_abs).into()
-            }))
+            if exponent.is_negative() {
+                let new_expr = one_over(exp(base.clone(), exponent_abs).into());
+                return Ok(Some(new_expr));
+            }
+            return Ok(None);
         }
         Expr::Number(num) => {
             let exponent_abs = exponent.abs();
-            let base = num.pow(exponent.unsigned_abs());
-            let base = Expr::Number(base);
+            let new_num = num.pow(exponent.unsigned_abs());
+            let new_num = Expr::Number(new_num);
             Ok(Some(if exponent.is_negative() {
-                one_over(base.into()).into()
+                one_over(new_num.into()).into()
             } else {
-                base
+                new_num
             }))
         }
     }
@@ -174,6 +174,22 @@ mod test {
         let actual = SimplifyExponentiation.simplify(&expr);
         //
         let expected = inner.pow(4);
+        assert_eq!(actual, Ok(Some(expected)));
+    }
+
+    #[test]
+    fn test_resturning_none() {
+        let expr = var('a').pow(6);
+        let actual = SimplifyExponentiation.simplify(&expr);
+        assert_eq!(actual, Ok(None));
+    }
+
+    #[test]
+    fn test_simplifying_double_exp() {
+        let expr = var('x').pow(4).pow(3);
+        let actual = SimplifyExponentiation.simplify(&expr);
+        //
+        let expected = var('x').pow(4 * 3);
         assert_eq!(actual, Ok(Some(expected)));
     }
 }

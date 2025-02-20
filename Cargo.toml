@@ -12,3 +12,6 @@ thiserror = "2.0.11"
 
 [lints.rust]
 unused = "allow"
+
+[profile.dev]
+debug = true
