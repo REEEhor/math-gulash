@@ -14,6 +14,7 @@ use crate::{
     expression::Expr,
 };
 
+#[derive(Debug)]
 pub struct DivSquares {
     a: Expr,
     b: Expr,

@@ -1,5 +1,5 @@
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Precedence(pub(super) u32);
 
 impl Precedence {

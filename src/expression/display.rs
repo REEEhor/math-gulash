@@ -112,14 +112,14 @@ impl<'a> fmt::Display for ExprDisplay<'a> {
             Expr::Addition(exprs) => write_addition(f, exprs.iter()),
             Expr::Multiplication(exprs) => write_multiplication(f, exprs.iter()),
             Expr::Division { lhs, rhs } => {
-                let should_print_parenthesis = DIVISION.is_before(lhs.precedence());
+                let should_print_parenthesis = DIVISION.is_before_or_same(lhs.precedence());
                 if should_print_parenthesis {
                     write!(f, "({})", lhs.disp())?;
                 } else {
                     write!(f, "{}", lhs.disp())?;
                 }
 
-                let should_print_parenthesis = DIVISION.is_before(rhs.precedence());
+                let should_print_parenthesis = DIVISION.is_before_or_same(rhs.precedence());
                 if should_print_parenthesis {
                     write!(f, "/({})", rhs.disp())?;
                 } else {
@@ -180,17 +180,29 @@ fn write_multiplication<'a, ExprIter: Iterator<Item = &'a Expr>>(
     f: &mut fmt::Formatter,
     exprs: ExprIter,
 ) -> fmt::Result {
-    for (idx, expr) in exprs.enumerate() {
-        // if idx != 0 {
-        //     write!(f, "·")?;
-        // }
-        let should_print_parenthesis = MULTIPLICATION.is_before(expr.precedence());
+    let mut prev_expr: Option<&Expr> = None;
+    for expr in exprs {
+        if let Some(prev_expr) = prev_expr {
+            let should_print_dot = match (prev_expr, expr) {
+                (_, Expr::Number(_)) => true,
+                (_, Expr::UnaryMinus(_)) => true,
+                (Expr::Division { .. }, _) => true,
+                (_, Expr::Division { .. }) => true,
+                _ => false,
+            };
+            if should_print_dot {
+                write!(f, "·")?;
+            }
+        }
+        let should_print_parenthesis =
+            MULTIPLICATION.is_before_or_same(expr.precedence()) || expr.precedence() == DIVISION;
 
         if should_print_parenthesis {
             write!(f, "({})", expr.disp())?;
         } else {
             write!(f, "{}", expr.disp())?;
         }
+        prev_expr = Some(expr);
     }
     Ok(())
 }
