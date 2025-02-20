@@ -3,6 +3,7 @@ pub mod canonical_term;
 pub mod simplify_exp;
 pub mod simplify_mult_div;
 pub mod var_exp_map;
+pub mod remove_ones_from_mult;
 
 use crate::{
     expression::{

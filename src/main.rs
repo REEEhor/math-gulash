@@ -17,7 +17,8 @@ fn main() {
         p_number_part: 0.8_f64,
         p_number_fraction: 0.3_f64,
         p_number_and_var_fused: 0.4_f64,
-        var_exponent_range: -20..=20,
+        p_var_in_denominator: 0.15_f64,
+        var_exponent_range: 1..=20,
         number_part_range: 1..=20,
         p_should_tell_via_formula: 1_f64,
     };

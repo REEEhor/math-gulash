@@ -49,8 +49,9 @@ pub struct DivSquaresFactory {
     pub p_number_part: Prob,
     pub p_number_fraction: Prob,
     pub p_number_and_var_fused: Prob,
-    pub var_exponent_range: RangeInclusive<i32>,
+    pub var_exponent_range: RangeInclusive<u32>,
     pub number_part_range: RangeInclusive<u32>,
+    pub p_var_in_denominator: Prob,
     pub p_should_tell_via_formula: Prob,
 }
 
@@ -71,6 +72,7 @@ impl ExcerciseFactory for DivSquaresFactory {
             self.p_number_part,
             self.p_number_fraction,
             self.p_number_and_var_fused,
+            self.p_var_in_denominator,
             self.var_exponent_range.clone(),
             self.number_part_range.clone(),
         );
@@ -81,6 +83,7 @@ impl ExcerciseFactory for DivSquaresFactory {
             self.p_number_part,
             self.p_number_fraction,
             self.p_number_and_var_fused,
+            self.p_var_in_denominator,
             self.var_exponent_range.clone(),
             self.number_part_range.clone(),
         );

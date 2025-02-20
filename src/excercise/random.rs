@@ -102,7 +102,8 @@ pub fn random_mult_term(
     p_number_part: Prob,
     p_number_fraction: Prob,
     p_number_and_var_fused: Prob,
-    var_exponent_range: RangeInclusive<i32>,
+    p_var_in_denominator: Prob,
+    var_exponent_abs_range: RangeInclusive<u32>,
     number_part_range: RangeInclusive<u32>,
 ) -> Expr {
     assert!(
@@ -117,7 +118,20 @@ pub fn random_mult_term(
     let max_vars_count = rnd.random_range(vars_count_range);
     for _ in 0..max_vars_count {
         let symbol = random_item_from(rnd, available_symbols);
-        vars_map[symbol] = rnd.random_range(var_exponent_range.clone());
+        let var_is_in_denominator = rnd.random_bool(p_var_in_denominator);
+        let (exp_lo, exp_hi) = if var_is_in_denominator {
+            let (lo, hi) = (
+                *var_exponent_abs_range.start() as i32,
+                *var_exponent_abs_range.end() as i32,
+            );
+            (-hi, -lo)
+        } else {
+            (
+                *var_exponent_abs_range.start() as i32,
+                *var_exponent_abs_range.end() as i32,
+            )
+        };
+        vars_map[symbol] = rnd.random_range(exp_lo..=exp_hi);
     }
     //
     let (top_exprs, bottom_exprs) = vars_map.partition_by_exp_sign();
@@ -146,6 +160,9 @@ pub fn random_mult_term(
     if has_number_part_seperate {
         let number_part_expr = Expr::from_number_fraction(number_fraction);
         let vars_part_expr = Expr::mult_div_from_exprs(top_exprs, bottom_exprs);
+        if vars_part_expr.as_number() == Some(1) {
+            return number_part_expr;
+        }
         return mul(number_part_expr, vars_part_expr);
     }
     //
