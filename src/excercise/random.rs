@@ -164,6 +164,9 @@ pub fn random_mult_term(
         if vars_part_expr.as_number() == Some(1) {
             return number_part_expr;
         }
+        if number_part_expr.as_number() == Some(1) {
+            return vars_part_expr;
+        }
         return mul(number_part_expr, vars_part_expr);
     }
     //
