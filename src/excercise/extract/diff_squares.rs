@@ -15,7 +15,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct DivSquares {
+pub struct DiffSquares {
     a: Expr,
     b: Expr,
     a2: Expr,
@@ -23,7 +23,7 @@ pub struct DivSquares {
     should_tell_via_formula: bool,
 }
 
-impl Excercise for DivSquares {
+impl Excercise for DiffSquares {
     fn do_excercise(&self) {
         if self.should_tell_via_formula {
             println!("Rozložte na součin pomocí vzorce:");
@@ -45,7 +45,7 @@ impl Excercise for DivSquares {
 }
 
 #[derive(Clone)]
-pub struct DivSquaresFactory {
+pub struct DiffSquaresFactory {
     pub symbols_generator: SymbolsGenerator,
     pub p_number_part: Prob,
     pub p_number_fraction: Prob,
@@ -56,7 +56,7 @@ pub struct DivSquaresFactory {
     pub p_should_tell_via_formula: Prob,
 }
 
-impl ExcerciseFactory for DivSquaresFactory {
+impl ExcerciseFactory for DiffSquaresFactory {
     fn generate(&mut self, rnd: &mut StdRng) -> Box<dyn Excercise> {
         let available_symbols: Vec<char> = self
             .symbols_generator
@@ -92,7 +92,7 @@ impl ExcerciseFactory for DivSquaresFactory {
         let a2 = pow_simplified(rnd, a.clone(), 2).expect("This sould never fail... oh well");
         let b2 = pow_simplified(rnd, b.clone(), 2).expect("This sould never fail... oh well");
 
-        Box::new(DivSquares {
+        Box::new(DiffSquares {
             a,
             b,
             a2,

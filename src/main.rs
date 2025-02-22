@@ -1,6 +1,6 @@
 use excercise::{
     excercise_set::{self, ExcerciseSet},
-    extract::{add_sub_squared::AddSubSquaredFactory, div_squares::DivSquaresFactory},
+    extract::{add_sub_squared::AddSubSquaredFactory, diff_squares::DiffSquaresFactory},
     random::SymbolsGenerator,
     ExcerciseFactory,
 };
@@ -15,7 +15,7 @@ fn main() {
     let seed: u64 = get_number("Zadej seed");
     let mut rnd = StdRng::seed_from_u64(seed);
 
-    let excercise_factory_1 = DivSquaresFactory {
+    let excercise_factory_1 = DiffSquaresFactory {
         symbols_generator: SymbolsGenerator::new(1, 2),
         p_number_part: 0.8_f64,
         p_number_fraction: 0.3_f64,
