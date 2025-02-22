@@ -170,7 +170,7 @@ fn simplify_mult<'a, ExprIter: Iterator<Item = &'a Expr>>(
 #[cfg(test)]
 mod test {
     use crate::{
-        expression::{self, error::EvalError, test_helpers::*, Expr},
+        expression::{self, error::EvalError, shorthands::*, Expr},
         simplification::Simplification,
     };
 
@@ -195,7 +195,7 @@ mod test {
         let vars = [vexp('a', -3), vexp('b', 5), vexp('a', 4)].into();
         let result = SimplifyMultDiv.simplify(&Expr::Multiplication(vars));
         //
-        let expected = mult(&[var('a'), vexp('b', 5)]);
+        let expected = mult([var('a'), vexp('b', 5)]);
         assert_eq!(result, Ok(Some(expected)));
     }
 
@@ -223,16 +223,16 @@ mod test {
             var('c'),
             var('d'),
         ];
-        let result = SimplifyMultDiv.simplify(&mult(&vars));
+        let result = SimplifyMultDiv.simplify(&mult(vars));
         //
-        let expected = mult(&[vexp('a', 4), vexp('c', 14), vexp('d', 4)]);
+        let expected = mult([vexp('a', 4), vexp('c', 14), vexp('d', 4)]);
         assert_eq!(result, Ok(Some(expected)));
     }
 
     #[test]
     fn test_just_numbers_1() {
         let exprs = [num(30), num(20)];
-        let result = SimplifyMultDiv.simplify(&mult(&exprs));
+        let result = SimplifyMultDiv.simplify(&mult(exprs));
         //
         let expected = Expr::Number(600);
         assert_eq!(result, Ok(Some(expected)));
@@ -241,7 +241,7 @@ mod test {
     #[test]
     fn test_just_numbers_2() {
         let exprs = [num(-30), num(40)];
-        let result = SimplifyMultDiv.simplify(&mult(&exprs));
+        let result = SimplifyMultDiv.simplify(&mult(exprs));
         //
         let expected = Expr::UnaryMinus(Expr::Number(1200).into());
         assert_eq!(result, Ok(Some(expected)));
@@ -250,7 +250,7 @@ mod test {
     #[test]
     fn test_var_division_1() {
         let vars = [vexp('a', -3)];
-        let result = SimplifyMultDiv.simplify(&mult(&vars));
+        let result = SimplifyMultDiv.simplify(&mult(vars));
         //
         let expected = div(num(1), vexp('a', 3));
         assert_eq!(result, Ok(Some(expected)));
@@ -259,7 +259,7 @@ mod test {
     #[test]
     fn test_var_division_2() {
         let vars = [var('a'), var('b'), vexp('a', -3)];
-        let result = SimplifyMultDiv.simplify(&mult(&vars));
+        let result = SimplifyMultDiv.simplify(&mult(vars));
         //
         let expected = div(var('b'), vexp('a', 2));
         assert_eq!(result, Ok(Some(expected)));
@@ -268,7 +268,7 @@ mod test {
     #[test]
     fn test_div_by_zero_detection_1() {
         let vars = [var('a'), var('b'), vexp('a', -3), div(num(2), num(0))];
-        let result = SimplifyMultDiv.simplify(&mult(&vars));
+        let result = SimplifyMultDiv.simplify(&mult(vars));
         //
         assert_eq!(result, Err(EvalError::DivisionByZero));
     }
@@ -284,7 +284,7 @@ mod test {
     #[test]
     fn test_div_by_zero_detection_3() {
         let vars = [div(num(1), div(num(1), num(0)))];
-        let result = SimplifyMultDiv.simplify(&mult(&vars));
+        let result = SimplifyMultDiv.simplify(&mult(vars));
         //
         assert_eq!(result, Err(EvalError::DivisionByZero));
     }
@@ -299,9 +299,9 @@ mod test {
             vexp('a', 2),
             div(num(2), num(3)),
         ];
-        let result = SimplifyMultDiv.simplify(&mult(&vars));
+        let result = SimplifyMultDiv.simplify(&mult(vars));
         //
-        let expected = mult(&[num(2), var('b')]);
+        let expected = mult([num(2), var('b')]);
         assert_eq!(result, Ok(Some(expected)));
     }
 
@@ -315,11 +315,11 @@ mod test {
             vexp('d', -5),
             div(num(-2), num(-3)),
         ];
-        let result = SimplifyMultDiv.simplify(&mult(&vars));
+        let result = SimplifyMultDiv.simplify(&mult(vars));
         //
         let expected = neg(div(
-            mult(&[num(8), var('a'), var('b')]),
-            mult(&[num(3), vexp('d', 3)]),
+            mult([num(8), var('a'), var('b')]),
+            mult([num(3), vexp('d', 3)]),
         ));
         assert_eq!(result, Ok(Some(expected)));
     }
@@ -341,10 +341,10 @@ mod test {
             num(1),
             div(vexp('c', -6), num(6)),
         ];
-        let result = SimplifyMultDiv.simplify(&mult(&vars));
+        let result = SimplifyMultDiv.simplify(&mult(vars));
         //
         let expected = div(
-            mult(&[num(7), vexp('a', 4), var('b'), vexp('d', 2)]),
+            mult([num(7), vexp('a', 4), var('b'), vexp('d', 2)]),
             vexp('c', 6),
         );
         assert_eq!(result, Ok(Some(expected)));
@@ -362,12 +362,12 @@ mod test {
     #[test]
     fn test_propagating_addition() {
         let expr = div(
-            mult(&[var('a'), add(&[num(5), num(6)])]),
-            mult(&[add(&[num(1), num(2), num(3)]), var('a')]),
+            mult([var('a'), add([num(5), num(6)])]),
+            mult([add([num(1), num(2), num(3)]), var('a')]),
         );
         let result = SimplifyMultDiv.simplify(&expr);
         //
-        let expected = div(add(&[num(5), num(6)]), add(&[num(1), num(2), num(3)]));
+        let expected = div(add([num(5), num(6)]), add([num(1), num(2), num(3)]));
         assert_eq!(result, Ok(Some(expected)));
     }
 }

@@ -118,7 +118,7 @@ mod test {
         convert::Infallible,
     };
 
-    use crate::expression::{error::EvalError, test_helpers::*, Expr};
+    use crate::expression::{error::EvalError, shorthands::*, Expr};
 
     use super::{SimpResult, Simplification};
 
@@ -186,19 +186,19 @@ mod test {
     fn test_simplify_once_recursive_one_deep_recursion() {
         let s = rename_simp_1();
         //
-        let expr = add(&[var('b'), var('a'), var('c')]);
+        let expr = add([var('b'), var('a'), var('c')]);
         let actual = s.simplify_once_recursive(&expr);
-        let expected = add(&[var('B'), var('a'), var('c')]);
+        let expected = add([var('B'), var('a'), var('c')]);
         assert_eq!(actual, Ok(Some(expected)));
         //
         let expr = actual.unwrap().unwrap();
         let actual = s.simplify_once_recursive(&expr);
-        let expected = add(&[var('B'), var('A'), var('c')]);
+        let expected = add([var('B'), var('A'), var('c')]);
         assert_eq!(actual, Ok(Some(expected)));
         //
         let expr = actual.unwrap().unwrap();
         let actual = s.simplify_once_recursive(&expr);
-        let expected = add(&[var('B'), var('A'), var('C')]);
+        let expected = add([var('B'), var('A'), var('C')]);
         assert_eq!(actual, Ok(Some(expected)));
         //
         let expr = actual.unwrap().unwrap();

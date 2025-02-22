@@ -1,4 +1,5 @@
 use excercise::{
+    excercise_set::{self, ExcerciseSet},
     extract::{add_sub_squared::AddSubSquaredFactory, div_squares::DivSquaresFactory},
     random::SymbolsGenerator,
     ExcerciseFactory,
@@ -35,15 +36,18 @@ fn main() {
         number_part_range: 1..=10,
         p_should_tell_via_formula: 1_f64,
         p_minus_sign: 0.5_f64,
+        p_invalid: todo!(),
     };
 
-    let mut excercise_factory = excercise_factory_1.clone()
-        .combine(excercise_factory_2)
-        .combine(excercise_factory_1);
+    let excercise_set = ExcerciseSet::from([]);
 
-    for idx in 0.. {
+    for idx in 1.. {
         println!("\n=======================================================================");
         println!("{idx}: ");
-        excercise_factory.generate(&mut rnd).do_excercise();
+        excercise_set
+            .choose_random(&mut rnd)
+            .generate(&mut rnd)
+            .do_excercise();
     }
 }
+

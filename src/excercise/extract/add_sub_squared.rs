@@ -4,7 +4,7 @@ use std::{
 };
 
 use colored::Colorize;
-use rand::Rng;
+use rand::{rngs::StdRng, Rng};
 
 use crate::{
     excercise::{
@@ -21,7 +21,7 @@ pub struct AddSubSquared {
     //
     a2: Expr,
     has_minus: bool,
-    two_ab: Expr,
+    middle_term: Expr,
     b2: Expr,
     //
     should_tell_via_formula: bool,
@@ -40,7 +40,7 @@ impl Excercise for AddSubSquared {
             "{} {} {} + {}",
             self.a2.disp(),
             sign,
-            self.two_ab.disp(),
+            self.middle_term.disp(),
             self.b2.disp(),
         );
         let result_str = format!(
@@ -71,10 +71,47 @@ pub struct AddSubSquaredFactory {
     pub p_var_in_denominator: Prob,
     pub p_minus_sign: Prob,
     pub p_should_tell_via_formula: Prob,
+    //
+    pub p_invalid: Prob,
+}
+
+impl AddSubSquaredFactory {
+    fn generate_mult_term(
+        &self,
+        rnd: &mut StdRng,
+        available_symbols: &[char],
+        must_contain_var: bool,
+    ) -> Expr {
+        random_mult_term(
+            rnd,
+            available_symbols,
+            must_contain_var,
+            self.p_number_part,
+            self.p_number_fraction,
+            self.p_number_and_var_fused,
+            self.p_var_in_denominator,
+            self.var_exponent_range.clone(),
+            self.number_part_range.clone(),
+        )
+    }
+
+    fn generate_middle_term(&self, rnd: &mut StdRng, a: Expr, b: Expr) -> Expr {
+        use crate::expression::shorthands::*;
+
+        let is_valid = !rnd.random_bool(self.p_invalid);
+        let raw_terms = if is_valid {
+            
+            todo!()
+        } else {
+            todo!()
+        };
+
+        todo!()
+    }
 }
 
 impl ExcerciseFactory for AddSubSquaredFactory {
-    fn generate(&mut self, rnd: &mut rand::prelude::StdRng) -> Box<dyn Excercise> {
+    fn generate(&mut self, rnd: &mut StdRng) -> Box<dyn Excercise> {
         let available_symbols: Vec<char> = self
             .symbols_generator
             .random_symbols(rnd)
@@ -83,31 +120,11 @@ impl ExcerciseFactory for AddSubSquaredFactory {
             .collect();
         let which_term_must_have_vars: bool = rnd.random_bool(0.5);
 
-        let a = random_mult_term(
-            rnd,
-            &available_symbols,
-            !which_term_must_have_vars,
-            self.p_number_part,
-            self.p_number_fraction,
-            self.p_number_and_var_fused,
-            self.p_var_in_denominator,
-            self.var_exponent_range.clone(),
-            self.number_part_range.clone(),
-        );
-        let b = random_mult_term(
-            rnd,
-            &available_symbols,
-            which_term_must_have_vars,
-            self.p_number_part,
-            self.p_number_fraction,
-            self.p_number_and_var_fused,
-            self.p_var_in_denominator,
-            self.var_exponent_range.clone(),
-            self.number_part_range.clone(),
-        );
+        let a = self.generate_mult_term(rnd, &available_symbols, !which_term_must_have_vars);
+        let b = self.generate_mult_term(rnd, &available_symbols, which_term_must_have_vars);
 
-        let a2 = pow_simplified(rnd, a.clone(), 2).expect("This sould never fail... oh well");
-        let b2 = pow_simplified(rnd, b.clone(), 2).expect("This sould never fail... oh well");
+        let a2 = pow_simplified(rnd, a.clone(), 2).expect("This should never fail... oh well");
+        let b2 = pow_simplified(rnd, b.clone(), 2).expect("This should never fail... oh well");
 
         let raw_two_ab =
             Expr::Multiplication([Expr::Number(2), Expr::clone(&a), Expr::clone(&b)].into());
@@ -123,7 +140,7 @@ impl ExcerciseFactory for AddSubSquaredFactory {
             b,
             a2,
             has_minus,
-            two_ab,
+            middle_term: two_ab,
             b2,
             should_tell_via_formula: rnd.random_bool(self.p_should_tell_via_formula),
         })

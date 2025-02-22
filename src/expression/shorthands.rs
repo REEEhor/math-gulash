@@ -20,11 +20,11 @@ pub fn var(symbol: char) -> Expr {
     Expr::Variable { symbol }
 }
 
-pub fn mult(exprs: &[Expr]) -> Expr {
+pub fn mult<const N: usize>(exprs: [Expr; N]) -> Expr {
     Expr::Multiplication(exprs.to_vec().into())
 }
 
-pub fn add(exprs: &[Expr]) -> Expr {
+pub fn add<const N: usize>(exprs: [Expr; N]) -> Expr {
     Expr::Addition(exprs.to_vec().into())
 }
 

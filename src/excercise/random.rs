@@ -1,6 +1,7 @@
 use core::num;
 use std::{
     collections::{HashSet, VecDeque},
+    fs::OpenOptions,
     num::NonZero,
     ops::RangeInclusive,
     sync::Arc,
@@ -187,4 +188,25 @@ pub fn pow_simplified(rnd: &mut StdRng, expr: Expr, exponent: u32) -> EvalResult
     }
 
     Ok(expr)
+}
+
+// TODO: tests
+pub fn pick_proportionally<T: Clone>(
+    rnd: &mut StdRng,
+    options: &[(Prob, T)],
+) -> T {
+    let probs_iter = options.iter().map(|tupl| tupl.0);
+    let sum: f64 = probs_iter.clone().sum();
+    let normalized_cumm_probs = probs_iter.map(|p| p / sum).scan(0_f64, |acc, curr| {
+        *acc = *acc + curr;
+        Some(*acc)
+    });
+
+    let random = rnd.random_range(0_f64..=1_f64);
+    let picked_idx = normalized_cumm_probs
+        .enumerate()
+        .find_map(|(idx, normalized_prob)| (random <= normalized_prob).then_some(idx))
+        .unwrap_or(options.len() - 1);
+
+    options[picked_idx].1.clone()
 }

@@ -9,7 +9,7 @@ pub mod error;
 pub mod number_fraction;
 pub mod ops;
 pub mod precedence;
-pub mod test_helpers;
+pub mod shorthands;
 
 use crate::expression::number_fraction::NumberFraction;
 use precedence::*;

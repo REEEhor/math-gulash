@@ -25,29 +25,29 @@ impl Simplification for RemoveOnesFromMult {
 #[cfg(test)]
 mod test {
     use crate::{
-        expression::test_helpers::*,
+        expression::shorthands::*,
         simplification::{remove_ones_from_mult::RemoveOnesFromMult, Simplification},
     };
 
     #[test]
     fn test_no_ones() {
-        let expr = mult(&[var('a'), var('b'), num(6), num(-4)]);
+        let expr = mult([var('a'), var('b'), num(6), num(-4)]);
         let actual = RemoveOnesFromMult.simplify(&expr);
         assert_eq!(actual, Ok(None));
     }
 
     #[test]
     fn test_some_ones() {
-        let expr = mult(&[num(1), var('a'), var('b'), num(1), num(-4)]);
+        let expr = mult([num(1), var('a'), var('b'), num(1), num(-4)]);
         let actual = RemoveOnesFromMult.simplify(&expr);
         //
-        let expected = mult(&[var('a'), var('b'), num(-4)]);
+        let expected = mult([var('a'), var('b'), num(-4)]);
         assert_eq!(actual, Ok(Some(expected)));
     }
 
     #[test]
     fn test_only_ones() {
-        let expr = mult(&[num(1), num(1), num(1)]);
+        let expr = mult([num(1), num(1), num(1)]);
         let actual = RemoveOnesFromMult.simplify(&expr);
         //
         let expected = num(1);
@@ -57,7 +57,7 @@ mod test {
     #[test]
     fn test_ones_with_other_expr() {
         let inner = div(vexp('x', -5), num(21));
-        let expr = mult(&[num(1), num(1), inner.clone(), num(1)]);
+        let expr = mult([num(1), num(1), inner.clone(), num(1)]);
         let actual = RemoveOnesFromMult.simplify(&expr);
         //
         let expected = inner;

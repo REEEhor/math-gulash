@@ -90,7 +90,7 @@ fn simplify_inner(base: Rc<Expr>, exponent: i32) -> SimpResult<Expr> {
 mod test {
 
     use crate::{
-        expression::{self, error::EvalError, ops::exp, test_helpers::*, Expr},
+        expression::{self, error::EvalError, ops::exp, shorthands::*, Expr},
         simplification::Simplification,
     };
 
@@ -125,19 +125,19 @@ mod test {
 
     #[test]
     fn test_flipping_of_fractions() {
-        let expr = div(num(2), add(&[var('a'), num(9)])).pow(-99);
+        let expr = div(num(2), add([var('a'), num(9)])).pow(-99);
         let actual = SimplifyExponentiation.simplify(&expr);
         //
-        let expected = div(add(&[var('a'), num(9)]).pow(99), num(2).pow(99));
+        let expected = div(add([var('a'), num(9)]).pow(99), num(2).pow(99));
         assert_eq!(actual, Ok(Some(expected)));
     }
 
     #[test]
     fn test_exp_of_multiplication() {
-        let expr = mult(&[num(10), num(20), var('x'), num(-30)]).pow(101);
+        let expr = mult([num(10), num(20), var('x'), num(-30)]).pow(101);
         let actual = SimplifyExponentiation.simplify(&expr);
         //
-        let expected = mult(&[
+        let expected = mult([
             num(10).pow(101),
             num(20).pow(101),
             var('x').pow(101),
@@ -157,7 +157,7 @@ mod test {
 
     #[test]
     fn test_exp_of_unary_minus_1() {
-        let inner = add(&[var('c'), vexp('x', 101)]);
+        let inner = add([var('c'), vexp('x', 101)]);
         //
         let expr = neg(inner.clone()).pow(5);
         let actual = SimplifyExponentiation.simplify(&expr);
@@ -168,7 +168,7 @@ mod test {
 
     #[test]
     fn test_exp_of_unary_minus_2() {
-        let inner = add(&[var('c'), vexp('x', 101)]);
+        let inner = add([var('c'), vexp('x', 101)]);
         //
         let expr = neg(inner.clone()).pow(4);
         let actual = SimplifyExponentiation.simplify(&expr);
