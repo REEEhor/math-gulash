@@ -12,6 +12,7 @@ use crate::{
         Excercise, ExcerciseFactory,
     },
     expression::Expr,
+    input::{get_input_map, wait_for_enter},
 };
 
 #[derive(Debug)]
@@ -21,26 +22,46 @@ pub struct DiffSquares {
     a2: Expr,
     b2: Expr,
     should_tell_via_formula: bool,
+    //
+    is_invalid: bool,
 }
 
 impl Excercise for DiffSquares {
     fn do_excercise(&self) {
-        if self.should_tell_via_formula {
-            println!("Rozložte na součin pomocí vzorce:");
-        } else {
-            println!("Rozložte na součin:");
-        }
+        println!("Rozložte na součin pomocí vzorce:");
 
-        let expr_str = format!("{} - {}", self.a2.disp(), self.b2.disp());
+        let expected_answer = !self.is_invalid;
+
+        let expr_str = format!(
+            "{} {} {}",
+            self.a2.disp(),
+            if self.is_invalid { '+' } else { '-' },
+            self.b2.disp(),
+        );
         let result_str = format!("({0} - {1}) * ({0} + {1})", self.a.disp(), self.b.disp());
 
         println!("  {}  =  ?", expr_str.cyan());
-        print!("Waiting for enter... ");
-        io::stdout().flush().unwrap();
-        io::stdin().read_line(&mut String::new()).unwrap();
+        let user_answer = get_input_map("Jde rozložit na součin?", [("ano", true), ("ne", false)]);
 
-        println!("Correct result:");
-        println!("  {}  =  {}", expr_str.cyan(), result_str.red());
+        match (expected_answer, user_answer) {
+            (true, true) => {
+                println!("{} Výraz lze rozložit:", "Správně!".green());
+                println!("  {}  =  {}", expr_str.cyan(), result_str.green());
+            }
+            (true, false) => {
+                println!("{}. Výraz lze rozložit:", "Špatně".red());
+                println!("  {}  =  {}", expr_str.cyan(), result_str.red());
+            }
+            (false, true) => {
+                println!("{}. Výraz nelze rozložit.", "Špatně".red());
+            }
+            (false, false) => {
+                println!("{} Výraz nelze rozložit.", "Správně!".green());
+            }
+        }
+
+        println!();
+        wait_for_enter("Dej enter pro další příklad");
     }
 }
 
@@ -54,6 +75,7 @@ pub struct DiffSquaresFactory {
     pub number_part_range: RangeInclusive<u32>,
     pub p_var_in_denominator: Prob,
     pub p_should_tell_via_formula: Prob,
+    pub p_invalid: Prob,
 }
 
 impl ExcerciseFactory for DiffSquaresFactory {
@@ -98,6 +120,7 @@ impl ExcerciseFactory for DiffSquaresFactory {
             a2,
             b2,
             should_tell_via_formula: rnd.random_bool(self.p_should_tell_via_formula),
+            is_invalid: rnd.random_bool(self.p_invalid),
         })
     }
 }

@@ -24,6 +24,7 @@ fn main() {
         var_exponent_range: 1..=20,
         number_part_range: 1..=20,
         p_should_tell_via_formula: 1_f64,
+        p_invalid: 0.5_f64,
     };
 
     let excercise_factory_2 = AddSubSquaredFactory {
@@ -40,7 +41,10 @@ fn main() {
         p_swapped_middle_term: 0.1_f64,
     };
 
-    let mut excercise_set = ExcerciseSet::from([(1, Box::new(excercise_factory_2))]);
+    let mut excercise_set = ExcerciseSet::from([
+        (1, Box::new(excercise_factory_1)),
+        (1, Box::new(excercise_factory_2)),
+    ]);
 
     for idx in 1.. {
         println!("\n=======================================================================");
@@ -51,4 +55,3 @@ fn main() {
             .do_excercise();
     }
 }
-
